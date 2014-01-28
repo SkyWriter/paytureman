@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "paytureman"
-  spec.version       = "0.1.1"
+  spec.version       = "0.1.2"
   spec.authors       = ["Ivan Kasatenko"]
   spec.email         = ["ivan@uniqsystems.ru"]
   spec.summary       = %q{Payture API implementation}
@@ -18,11 +18,11 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "rest_client", "~> 1.7"
-  spec.add_dependency "activesupport", "~> 0"
+  spec.add_dependency "activesupport"
 
   spec.add_development_dependency "bundler", "~> 1.5"
-  spec.add_development_dependency "rake", "~> 0"
-  spec.add_development_dependency "bond", "~> 0"
-  spec.add_development_dependency "pry", "~> 0"
-  spec.add_development_dependency "rspec", "~> 0"
+  spec.add_development_dependency "rake"
+  spec.add_development_dependency "bond"
+  spec.add_development_dependency "pry"
+  spec.add_development_dependency "rspec"
 end
