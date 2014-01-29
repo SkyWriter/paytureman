@@ -23,6 +23,12 @@ module Paytureman
       response[:success]
     end
 
+    def status(order_id)
+      response = make_request(:pay_status, order_id: order_id)
+      return :prepared if !response[:success] && response[:err_code] == :none
+      response[:success] && response[:state]
+    end
+
   protected
 
     def rest_client
@@ -47,6 +53,9 @@ module Paytureman
       end
       if result[:amount]
         result[:amount] = result[:amount].to_i
+      end
+      if result[:err_code]
+        result[:err_code] = result[:err_code].downcase.to_sym
       end
       return result
     end

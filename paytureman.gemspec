@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "paytureman"
-  spec.version       = "0.1.2"
+  spec.version       = "0.2.0"
   spec.authors       = ["Ivan Kasatenko"]
   spec.email         = ["ivan@uniqsystems.ru"]
   spec.summary       = %q{Payture API implementation}

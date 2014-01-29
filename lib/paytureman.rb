@@ -13,5 +13,6 @@ require_relative 'payments/payment_prepared'
 require_relative 'payments/payment_blocked'
 require_relative 'payments/payment_charged'
 require_relative 'payments/payment_cancelled'
+require_relative 'payments/payment_unknown'
 
 require_relative 'service/payment_persistence'
