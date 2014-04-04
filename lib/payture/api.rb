@@ -1,9 +1,9 @@
 module Paytureman
   class Api
     include Singleton
-    
+
     attr_accessor :rest_client
-    
+
     def init(order_id, amount, ip)
       init_params = {
         data: "SessionType=Block;OrderId=#{order_id};Amount=#{amount};IP=#{ip}",
@@ -17,7 +17,7 @@ module Paytureman
       response = make_request(:charge, order_id: order_id, password: '123')
       response[:success]
     end
-    
+
     def unblock(order_id, amount)
       response = make_request(:unblock, order_id: order_id, amount: amount, password: '123')
       response[:success]

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe "Payment" do
-  
+
   let(:order_id) { SecureRandom.uuid }
   let(:amount) { 123.45 }
   let(:ip) { '123.45.67.89' }
@@ -11,7 +11,7 @@ describe "Payment" do
       expect(mock).to receive(:init).with(order_id, amount*100, ip).and_return(session_id)
     end
   }
-  
+
   it "should charge successfully" do
     expect(payture_mock).to receive(:charge).with(order_id, session_id).and_return(true)
 
@@ -20,7 +20,7 @@ describe "Payment" do
 
     payment = payment.prepare
     expect(payment).to be_kind_of(PaymentPrepared)
-    
+
     payment = payment.block
     expect(payment).to be_kind_of(PaymentBlocked)
 
@@ -28,7 +28,7 @@ describe "Payment" do
     payment = payment.charge
     expect(payment).to be_kind_of(PaymentCharged)
   end
-  
+
   it "should unblock successfully" do
     expect(payture_mock).to receive(:unblock).with(order_id, amount*100).and_return(true)
 
@@ -37,7 +37,7 @@ describe "Payment" do
 
     payment = payment.prepare
     expect(payment).to be_kind_of(PaymentPrepared)
-    
+
     payment = payment.block
     expect(payment).to be_kind_of(PaymentBlocked)
 
