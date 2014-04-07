@@ -28,7 +28,8 @@ module Paytureman
         :prepared => PaymentPrepared,
         :authorized => PaymentBlocked,
         :voided => PaymentCancelled,
-        :charged => PaymentCharged
+        :charged => PaymentCharged,
+        :refund => PaymentRefunded
       }[payture.status(order_id)] || PaymentUnknown
       current_payment_type.new_from_payment(self)
     end

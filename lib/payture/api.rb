@@ -18,6 +18,11 @@ module Paytureman
       response[:success]
     end
 
+    def refund(order_id, amount)
+      response = make_request(:refund, order_id: order_id, amount: amount, password: '123')
+      response[:success]
+    end
+
     def unblock(order_id, amount)
       response = make_request(:unblock, order_id: order_id, amount: amount, password: '123')
       response[:success]

@@ -46,4 +46,26 @@ describe "Payment" do
     expect(payment).to be_kind_of(PaymentCancelled)
   end
 
+  it "should refund successfully" do
+    expect(payture_mock).to receive(:charge).with(order_id, session_id).and_return(true)
+    expect(payture_mock).to receive(:refund).with(order_id, amount*100).and_return(true)
+
+    payment = PaymentNew.new(order_id, amount, ip)
+    payment.payture = payture_mock
+
+    payment = payment.prepare
+    expect(payment).to be_kind_of(PaymentPrepared)
+
+    payment = payment.block
+    expect(payment).to be_kind_of(PaymentBlocked)
+
+    payment.payture = payture_mock
+    payment = payment.charge
+    expect(payment).to be_kind_of(PaymentCharged)
+
+    payment.payture = payture_mock
+    payment = payment.refund
+    expect(payment).to be_kind_of(PaymentRefunded)
+  end
+
 end
