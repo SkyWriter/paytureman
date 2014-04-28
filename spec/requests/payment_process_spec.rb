@@ -79,8 +79,8 @@ describe "Payment" do
     expect(RestClient).to receive(:post).with(
       init_payment_url,
       {
-          "Data"=>"SessionType=Block;OrderId=#{order_id};Amount=#{(amount*100).to_i};IP=#{ip};Product=#{URI.escape(product)};Total=#{total}",
-          "Key"=>"MerchantRutravel"
+          "Data" => "SessionType=Block;OrderId=#{order_id};Amount=#{(amount*100).to_i};IP=#{ip};Product=#{URI.escape(product)};Total=#{total}",
+          "Key" => "MerchantRutravel"
       }
     ).and_return(empty_response)
 
@@ -93,13 +93,28 @@ describe "Payment" do
     expect(RestClient).to receive(:post).with(
         init_payment_url,
         {
-            "Data"=>"SessionType=Block;OrderId=#{order_id};Amount=#{(amount*100).to_i};IP=#{ip}",
-            "Key"=>"MerchantRutravel"
+            "Data" => "SessionType=Block;OrderId=#{order_id};Amount=#{(amount*100).to_i};IP=#{ip}",
+            "Key" => "MerchantRutravel"
         }
     ).and_return(empty_response)
 
     payment = PaymentNew.new(order_id, amount, ip)
     payment.prepare(PaymentDescription.new(nil, nil, nil, nil))
+  end
+
+  it "should send valid params" do
+    expect(RestClient).to receive(:post).with(
+        "https://sandbox.payture.com/apim/Charge",
+        {
+            "OrderId" => order_id,
+            "Password" => "123",
+            "Key" => "MerchantRutravel"
+        }
+    ).and_return(empty_response)
+
+    payment = PaymentBlocked.new(order_id, amount, ip, 'session')
+
+    payment.charge
   end
 
 end
