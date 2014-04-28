@@ -4,9 +4,13 @@ module Paytureman
 
     attr_accessor :rest_client
 
-    def init(order_id, amount, ip)
+    def init(order_id, amount, ip, description = {})
+
+      data = { SessionType: :Block, OrderId: order_id, Amount: amount, IP: ip }
+      data.merge!(description)
+
       init_params = {
-        data: "SessionType=Block;OrderId=#{order_id};Amount=#{amount};IP=#{ip}",
+          'Data' => URI.escape(data.map { |a| a.join('=').camelize }.join(';'))
       }
 
       response = make_request(:init, init_params)
@@ -41,10 +45,7 @@ module Paytureman
     end
 
     def make_request(method, params)
-      params = Hash[
-                 params.merge(key: 'MerchantRutravel').
-                 map { |k, v| [ k.to_s.camelize, v ] }
-               ]
+      params = params.merge!('Key' => 'MerchantRutravel')
       response = rest_client.post "https://sandbox.payture.com/apim/#{method.to_s.camelize}", params
       puts response.body
       return nil if response.body.empty?
