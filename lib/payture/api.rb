@@ -45,7 +45,10 @@ module Paytureman
     end
 
     def make_request(method, params)
-      params = params.merge!('Key' => 'MerchantRutravel')
+      params = Hash[
+          params.merge(key: 'MerchantRutravel').
+              map { |k, v| [ k.to_s.camelize, v ] }
+      ]
       response = rest_client.post "https://sandbox.payture.com/apim/#{method.to_s.camelize}", params
       puts response.body
       return nil if response.body.empty?
