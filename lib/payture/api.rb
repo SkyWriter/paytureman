@@ -1,8 +1,10 @@
 module Paytureman
   class Api
-    include Singleton
-
     attr_accessor :rest_client
+
+    def initialize(url, key)
+      @url, @key = url, key
+    end
 
     def init(order_id, amount, ip, description = {})
 
@@ -46,10 +48,10 @@ module Paytureman
 
     def make_request(method, params)
       params = Hash[
-          params.merge(key: 'MerchantRutravel').
+          params.merge(key: @key).
               map { |k, v| [ k.to_s.camelize, v ] }
       ]
-      response = rest_client.post "https://sandbox.payture.com/apim/#{method.to_s.camelize}", params
+      response = rest_client.post "#{@url}/#{method.to_s.camelize}", params
       puts response.body
       return nil if response.body.empty?
       doc = REXML::Document.new(response.body)

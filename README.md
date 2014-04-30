@@ -21,12 +21,17 @@ Or install it yourself as:
 ```ruby
 require 'paytureman'
 
+Paytureman::GatewayConfigurator.instance.configure(:default) do |config|
+  config.url = "https://sandbox.payture.com/apim"
+  config.key = "MerchantKey"
+end
+
 order_id = SecureRandom.uuid # generate an order ID
 amount = 123.15 # amount to be charged
 customer_ip = "123.45.67.89" # customer's IP address
 
 # create initial payment
-payment = Paytureman::PaymentNew.new(order_id, amount, customer_ip)
+payment = Paytureman::PaymentNew.new(:default, order_id, amount, customer_ip)
 
 # prepare it
 payment = payment.prepare

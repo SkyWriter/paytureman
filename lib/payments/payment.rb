@@ -4,16 +4,16 @@ module Paytureman
 
     attr_reader :order_id
 
-    def initialize(order_id, amount, ip)
-      @order_id, @amount, @ip = order_id, amount, ip
+    def initialize(gateway, order_id, amount, ip)
+      @gateway, @order_id, @amount, @ip = gateway, order_id, amount, ip
     end
 
     def save_to_memento(memento)
-      memento.order_id, memento.amount, memento.ip = order_id, amount, ip
+      memento.gateway, memento.order_id, memento.amount, memento.ip = gateway, order_id, amount, ip
     end
 
     def self.new_from_memento(memento)
-      new(memento.order_id, memento.amount, memento.ip)
+      new(memento.gateway, memento.order_id, memento.amount, memento.ip)
     end
 
     def self.new_from_payment(donor)
@@ -34,15 +34,20 @@ module Paytureman
       current_payment_type.new_from_payment(self)
     end
 
-    attr_accessor :payture
+    attr_writer :gateway_configurator
+    attr_accessor :gateway
 
   protected
 
-    attr_accessor :amount, :ip
+    attr_accessor :amount, :ip, :payture
     attr_writer   :order_id
 
+    def gateway_configurator
+      @gateway_configurator ||= GatewayConfigurator.instance
+    end
+
     def payture
-      @payture ||= Api.instance
+      gateway_configurator.create_api_by_name(gateway)
     end
 
   end

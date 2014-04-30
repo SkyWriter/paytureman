@@ -4,7 +4,7 @@ module Paytureman
 
     def unblock
       if payture.unblock(order_id, (self.amount*100).round)
-        PaymentCancelled.new(order_id, amount, ip, session_id)
+        PaymentCancelled.new(gateway, order_id, amount, ip, session_id)
       else
         self
       end
@@ -12,7 +12,7 @@ module Paytureman
 
     def charge
       if payture.charge(order_id, session_id)
-        PaymentCharged.new(order_id, amount, ip, session_id)
+        PaymentCharged.new(gateway, order_id, amount, ip, session_id)
       else
         self
       end

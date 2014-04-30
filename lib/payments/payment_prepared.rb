@@ -7,7 +7,7 @@ module Paytureman
     end
 
     def block
-      PaymentBlocked.new(order_id, amount, ip, session_id)
+      PaymentBlocked.new(gateway, order_id, amount, ip, session_id)
     end
 
   end

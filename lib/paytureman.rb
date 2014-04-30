@@ -18,3 +18,4 @@ require_relative 'payments/payment_cancelled'
 require_relative 'payments/payment_unknown'
 
 require_relative 'service/payment_persistence'
+require_relative 'service/gateway_configurator'

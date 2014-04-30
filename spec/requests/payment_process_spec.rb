@@ -13,11 +13,23 @@ describe "Payment" do
     end
   }
 
+  let(:gateway_configurator_mock_default) {
+    double("GatewayConfigurator").tap do |mock|
+      allow(mock).to receive(:create_api_by_name).with(:default).and_return(payture_mock)
+    end
+  }
+
+  let(:gateway_configurator_mock_real) {
+    double("GatewayConfigurator").tap do |mock|
+      allow(mock).to receive(:create_api_by_name).with(:real).and_return(Paytureman::Api.new('https://sandbox.payture.com/apim', 'MerchantRutravel'))
+    end
+  }
+
   it "should charge successfully" do
     expect(payture_mock).to receive(:charge).with(order_id, session_id).and_return(true)
 
-    payment = PaymentNew.new(order_id, amount, ip)
-    payment.payture = payture_mock
+    payment = PaymentNew.new(:default, order_id, amount, ip)
+    payment.gateway_configurator = gateway_configurator_mock_default
 
     payment = payment.prepare
 
@@ -26,7 +38,7 @@ describe "Payment" do
     payment = payment.block
     expect(payment).to be_kind_of(PaymentBlocked)
 
-    payment.payture = payture_mock
+    payment.gateway_configurator = gateway_configurator_mock_default
     payment = payment.charge
     expect(payment).to be_kind_of(PaymentCharged)
   end
@@ -34,8 +46,8 @@ describe "Payment" do
   it "should unblock successfully" do
     expect(payture_mock).to receive(:unblock).with(order_id, amount*100).and_return(true)
 
-    payment = PaymentNew.new(order_id, amount, ip)
-    payment.payture = payture_mock
+    payment = PaymentNew.new(:default, order_id, amount, ip)
+    payment.gateway_configurator = gateway_configurator_mock_default
 
     payment = payment.prepare
     expect(payment).to be_kind_of(PaymentPrepared)
@@ -43,7 +55,7 @@ describe "Payment" do
     payment = payment.block
     expect(payment).to be_kind_of(PaymentBlocked)
 
-    payment.payture = payture_mock
+    payment.gateway_configurator = gateway_configurator_mock_default
     payment = payment.unblock
     expect(payment).to be_kind_of(PaymentCancelled)
   end
@@ -52,8 +64,8 @@ describe "Payment" do
     expect(payture_mock).to receive(:charge).with(order_id, session_id).and_return(true)
     expect(payture_mock).to receive(:refund).with(order_id, amount*100).and_return(true)
 
-    payment = PaymentNew.new(order_id, amount, ip)
-    payment.payture = payture_mock
+    payment = PaymentNew.new(:default, order_id, amount, ip)
+    payment.gateway_configurator = gateway_configurator_mock_default
 
     payment = payment.prepare
     expect(payment).to be_kind_of(PaymentPrepared)
@@ -61,11 +73,11 @@ describe "Payment" do
     payment = payment.block
     expect(payment).to be_kind_of(PaymentBlocked)
 
-    payment.payture = payture_mock
+    payment.gateway_configurator = gateway_configurator_mock_default
     payment = payment.charge
     expect(payment).to be_kind_of(PaymentCharged)
 
-    payment.payture = payture_mock
+    payment.gateway_configurator = gateway_configurator_mock_default
     payment = payment.refund
     expect(payment).to be_kind_of(PaymentRefunded)
   end
@@ -84,7 +96,8 @@ describe "Payment" do
       }
     ).and_return(empty_response)
 
-    payment = PaymentNew.new(order_id, amount, ip)
+    payment = PaymentNew.new(:real, order_id, amount, ip)
+    payment.gateway_configurator = gateway_configurator_mock_real
 
     payment.prepare(PaymentDescription.new(product, total))
   end
@@ -98,7 +111,9 @@ describe "Payment" do
         }
     ).and_return(empty_response)
 
-    payment = PaymentNew.new(order_id, amount, ip)
+    payment = PaymentNew.new(:real, order_id, amount, ip)
+    payment.gateway_configurator = gateway_configurator_mock_real
+
     payment.prepare(PaymentDescription.new(nil, nil, nil, nil))
   end
 
@@ -112,7 +127,8 @@ describe "Payment" do
         }
     ).and_return(empty_response)
 
-    payment = PaymentBlocked.new(order_id, amount, ip, 'session')
+    payment = PaymentBlocked.new(:real, order_id, amount, ip, 'session')
+    payment.gateway_configurator = gateway_configurator_mock_real
 
     payment.charge
   end
