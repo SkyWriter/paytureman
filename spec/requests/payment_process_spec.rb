@@ -8,28 +8,14 @@ describe "Payment" do
   let(:session_id) { SecureRandom.uuid }
 
   let(:payture_mock) {
-    double("Payture").tap do |mock|
-      expect(mock).to receive(:init).with(order_id, amount*100, ip, {}).and_return(session_id)
-    end
-  }
-
-  let(:gateway_configurator_mock_default) {
-    double("GatewayConfigurator").tap do |mock|
-      allow(mock).to receive(:create_api_by_name).with(:default).and_return(payture_mock)
-    end
-  }
-
-  let(:gateway_configurator_mock_real) {
-    double("GatewayConfigurator").tap do |mock|
-      allow(mock).to receive(:create_api_by_name).with(:real).and_return(Paytureman::Api.new('https://sandbox.payture.com/apim', 'MerchantRutravel'))
-    end
+    Api.any_instance
   }
 
   it "should charge successfully" do
-    expect(payture_mock).to receive(:charge).with(order_id, session_id).and_return(true)
+    payture_mock.stub(:init).with(order_id, amount*100, ip, {}).and_return(session_id)
+    payture_mock.stub(:charge).with(order_id).and_return(true)
 
-    payment = PaymentNew.new(:default, order_id, amount, ip)
-    payment.gateway_configurator = gateway_configurator_mock_default
+    payment = PaymentNew.new(order_id, amount, ip)
 
     payment = payment.prepare
 
@@ -38,16 +24,16 @@ describe "Payment" do
     payment = payment.block
     expect(payment).to be_kind_of(PaymentBlocked)
 
-    payment.gateway_configurator = gateway_configurator_mock_default
+
     payment = payment.charge
     expect(payment).to be_kind_of(PaymentCharged)
   end
 
   it "should unblock successfully" do
-    expect(payture_mock).to receive(:unblock).with(order_id, amount*100).and_return(true)
+    payture_mock.stub(:init).with(order_id, amount*100, ip, {}).and_return(session_id)
+    payture_mock.stub(:unblock).with(order_id, amount*100).and_return(true)
 
-    payment = PaymentNew.new(:default, order_id, amount, ip)
-    payment.gateway_configurator = gateway_configurator_mock_default
+    payment = PaymentNew.new(order_id, amount, ip)
 
     payment = payment.prepare
     expect(payment).to be_kind_of(PaymentPrepared)
@@ -55,17 +41,16 @@ describe "Payment" do
     payment = payment.block
     expect(payment).to be_kind_of(PaymentBlocked)
 
-    payment.gateway_configurator = gateway_configurator_mock_default
     payment = payment.unblock
     expect(payment).to be_kind_of(PaymentCancelled)
   end
 
   it "should refund successfully" do
-    expect(payture_mock).to receive(:charge).with(order_id, session_id).and_return(true)
-    expect(payture_mock).to receive(:refund).with(order_id, amount*100).and_return(true)
+    payture_mock.stub(:init).with(order_id, amount*100, ip, {}).and_return(session_id)
+    payture_mock.stub(:charge).with(order_id).and_return(true)
+    payture_mock.stub(:refund).with(order_id, amount*100).and_return(true)
 
-    payment = PaymentNew.new(:default, order_id, amount, ip)
-    payment.gateway_configurator = gateway_configurator_mock_default
+    payment = PaymentNew.new(order_id, amount, ip)
 
     payment = payment.prepare
     expect(payment).to be_kind_of(PaymentPrepared)
@@ -73,11 +58,9 @@ describe "Payment" do
     payment = payment.block
     expect(payment).to be_kind_of(PaymentBlocked)
 
-    payment.gateway_configurator = gateway_configurator_mock_default
     payment = payment.charge
     expect(payment).to be_kind_of(PaymentCharged)
 
-    payment.gateway_configurator = gateway_configurator_mock_default
     payment = payment.refund
     expect(payment).to be_kind_of(PaymentRefunded)
   end
@@ -96,8 +79,7 @@ describe "Payment" do
       }
     ).and_return(empty_response)
 
-    payment = PaymentNew.new(:real, order_id, amount, ip)
-    payment.gateway_configurator = gateway_configurator_mock_real
+    payment = PaymentNew.new(order_id, amount, ip)
 
     payment.prepare(PaymentDescription.new(product, total))
   end
@@ -111,26 +93,93 @@ describe "Payment" do
         }
     ).and_return(empty_response)
 
-    payment = PaymentNew.new(:real, order_id, amount, ip)
-    payment.gateway_configurator = gateway_configurator_mock_real
+    payment = PaymentNew.new(order_id, amount, ip)
 
     payment.prepare(PaymentDescription.new(nil, nil, nil, nil))
   end
 
+  let(:real_configuration) {
+    double('configuration').tap do |config|
+      allow(config).to receive(:api_for).with(:real).and_return(Api.new('secure', 'MERCHANT100100', 'password'))
+    end
+  }
+
   it "should send valid params" do
     expect(RestClient).to receive(:post).with(
-        "https://sandbox.payture.com/apim/Charge",
-        {
-            "OrderId" => order_id,
-            "Password" => "123",
-            "Key" => "MerchantRutravel"
-        }
+      "https://secure.payture.com/apim/Charge",
+      {
+          "OrderId" => order_id,
+          "Password" => "password",
+          "Key" => "MERCHANT100100"
+      }
     ).and_return(empty_response)
 
-    payment = PaymentBlocked.new(:real, order_id, amount, ip, 'session')
-    payment.gateway_configurator = gateway_configurator_mock_real
+    payment = PaymentBlocked.new(order_id, amount, 'session', :real)
+    payment.configuration = real_configuration
 
     payment.charge
+  end
+
+  describe 'using same gateway when status changing' do
+    before do
+      Configuration.setup :settings do |config|
+        config.host = 'host'
+        config.key = 'key'
+        config.password = 'password'
+      end
+    end
+
+    it 'when charged' do
+      payture_mock.stub(:init).with(order_id, amount*100, ip, {}).and_return(session_id)
+      payture_mock.stub(:charge).with(order_id).and_return(true)
+
+      payment = PaymentNew.new(order_id, amount, ip, :settings)
+
+      payment = payment.prepare
+      expect(payment.gateway).to eq :settings
+
+      payment = payment.block
+      expect(payment.gateway).to eq :settings
+
+      payment = payment.charge
+      expect(payment.gateway).to eq :settings
+    end
+
+    it "when unblocked" do
+      payture_mock.stub(:init).with(order_id, amount*100, ip, {}).and_return(session_id)
+      payture_mock.stub(:unblock).with(order_id, amount*100).and_return(true)
+
+      payment = PaymentNew.new(order_id, amount, ip, :settings)
+
+      payment = payment.prepare
+      expect(payment.gateway).to eq :settings
+
+      payment = payment.block
+      expect(payment.gateway).to eq :settings
+
+      payment = payment.unblock
+      expect(payment.gateway).to eq :settings
+    end
+
+    it "when refunded" do
+      payture_mock.stub(:init).with(order_id, amount*100, ip, {}).and_return(session_id)
+      payture_mock.stub(:charge).with(order_id).and_return(true)
+      payture_mock.stub(:refund).with(order_id, amount*100).and_return(true)
+
+      payment = PaymentNew.new(order_id, amount, ip, :settings)
+
+      payment = payment.prepare
+      expect(payment.gateway).to eq :settings
+
+      payment = payment.block
+      expect(payment.gateway).to eq :settings
+
+      payment = payment.charge
+      expect(payment.gateway).to eq :settings
+
+      payment = payment.refund
+      expect(payment.gateway).to eq :settings
+    end
   end
 
 end

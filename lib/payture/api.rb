@@ -2,8 +2,10 @@ module Paytureman
   class Api
     attr_accessor :rest_client
 
-    def initialize(url, key)
-      @url, @key = url, key
+    def initialize(host, key, password)
+      @host = host
+      @key = key
+      @password = password
     end
 
     def init(order_id, amount, ip, description = {})
@@ -19,18 +21,22 @@ module Paytureman
       response[:success] && response[:session_id]
     end
 
-    def charge(order_id, session_id)
-      response = make_request(:charge, order_id: order_id, password: '123')
+    def pay_url(session_id)
+      "#{url_for(:pay)}?SessionId=#{session_id}"
+    end
+
+    def charge(order_id)
+      response = make_request(:charge, order_id: order_id, password: @password)
       response[:success]
     end
 
     def refund(order_id, amount)
-      response = make_request(:refund, order_id: order_id, amount: amount, password: '123')
+      response = make_request(:refund, order_id: order_id, amount: amount, password: @password)
       response[:success]
     end
 
     def unblock(order_id, amount)
-      response = make_request(:unblock, order_id: order_id, amount: amount, password: '123')
+      response = make_request(:unblock, order_id: order_id, amount: amount, password: @password)
       response[:success]
     end
 
@@ -51,7 +57,7 @@ module Paytureman
           params.merge(key: @key).
               map { |k, v| [ k.to_s.camelize, v ] }
       ]
-      response = rest_client.post "#{@url}/#{method.to_s.camelize}", params
+      response = rest_client.post url_for(method), params
       puts response.body
       return nil if response.body.empty?
       doc = REXML::Document.new(response.body)
@@ -69,6 +75,10 @@ module Paytureman
         result[:err_code] = result[:err_code].downcase.to_sym
       end
       return result
+    end
+
+    def url_for(method)
+      "https://#@host.payture.com/apim/#{method.to_s.camelize}"
     end
 
   end

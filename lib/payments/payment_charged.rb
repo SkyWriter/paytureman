@@ -2,8 +2,8 @@ module Paytureman
 
   class PaymentCharged < PaymentWithSession
     def refund
-      if payture.refund(order_id, (self.amount*100).round)
-        PaymentRefunded.new(gateway, order_id, amount, ip, session_id)
+      if payture.refund(order_id, amount_in_cents)
+        PaymentRefunded.new(order_id, amount, session_id, gateway)
       else
         self
       end

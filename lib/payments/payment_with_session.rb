@@ -2,9 +2,9 @@ module Paytureman
 
   class PaymentWithSession < Payment
 
-    def initialize(gateway, order_id, amount, ip, session_id)
+    def initialize(order_id, amount, session_id, gateway = nil)
+      super(order_id, amount, gateway)
       @session_id = session_id
-      super(gateway, order_id, amount, ip)
     end
 
     def save_to_memento(memento)
@@ -13,7 +13,7 @@ module Paytureman
     end
 
     def self.new_from_memento(memento)
-      new(memento.gateway, memento.order_id, memento.amount, memento.ip, memento.session_id)
+      new(memento.order_id, memento.amount, memento.session_id, memento.gateway)
     end
 
   protected
