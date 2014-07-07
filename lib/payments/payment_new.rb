@@ -1,11 +1,22 @@
 module Paytureman
 
-  class PaymentDescription < Struct.new(:product, :total, :template_tag, :language)
+  VALID_OPTIONS = [
+    :template_tag,
+    :language,
+    :url,
+    :total,
+    :product
+  ]
 
-    def to_h
-      super.select { |_, v| v.present? }
+  class PaymentDescription
+    def initialize(description = {})
+      @description = description.dup
+      @description.assert_valid_keys(*VALID_OPTIONS)
     end
 
+    def to_h
+      @description.select { |_, v| v.present? }
+    end
   end
 
   class PaymentNew < Payment
