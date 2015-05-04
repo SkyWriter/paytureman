@@ -74,14 +74,27 @@ describe "Payment" do
     expect(RestClient).to receive(:post).with(
       init_payment_url,
       {
-          "Data" => "SessionType=Block;OrderId=#{order_id};Amount=#{(amount*100).to_i};IP=#{ip};Product=#{URI.escape(product)};Total=#{total}",
+          "Data" => "SessionType=Block;OrderId=#{order_id};Amount=#{(amount*100).to_i};IP=#{ip};Product=#{URI.escape(product)};Total=#{total};Url=http://localhost:3000/?foo=bar",
           "Key" => "MerchantRutravel"
       }
     ).and_return(empty_response)
 
     payment = PaymentNew.new(order_id, amount, ip)
 
-    payment.prepare(PaymentDescription.new(product, total))
+    payment.prepare(PaymentDescription.new(product: product, total: total, url: 'http://localhost:3000/?foo=bar'))
+  end
+
+  it "should raise error if unkonwn option used" do
+    expect { PaymentDescription.new(unknown: 'foobar') }.to raise_error
+  end
+
+  it "should not use modified options" do
+    options = { url: 'url' }
+    description = PaymentDescription.new(options)
+    
+    options[:unknown] = 'foobar'
+
+    expect(description.to_h).to eq(url: 'url')
   end
 
   it "should not use description in request if they not defined" do
@@ -95,7 +108,7 @@ describe "Payment" do
 
     payment = PaymentNew.new(order_id, amount, ip)
 
-    payment.prepare(PaymentDescription.new(nil, nil, nil, nil))
+    payment.prepare(PaymentDescription.new(product: nil, total: nil, language: nil, url: nil))
   end
 
   let(:real_configuration) {

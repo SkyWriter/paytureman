@@ -45,9 +45,7 @@ payment = Paytureman::PaymentNew.new(order_id, amount, customer_ip)
 payment = Paytureman::PaymentNew.new(order_id, amount, customer_ip, :production)
 
 # prepare it
-description = Paytureman::PaymentDescription.new
-description.product = 'Paytureman demo payment'
-description.total = amount
+description = Paytureman::PaymentDescription.new(product: 'Paytureman demo payment', total: amount, url: '...success url...')
 
 payment = payment.prepare(description)
 # ... assert(payment.kind_of?(Paytureman::PaymentPrepared))

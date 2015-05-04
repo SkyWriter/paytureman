@@ -1,6 +1,7 @@
 require 'active_support/core_ext/class/attribute_accessors'
 require 'active_support/core_ext/string/inflections'
 require 'active_support/core_ext/object/blank'
+require 'active_support/core_ext/hash/keys'
 require 'rexml/document'
 require 'rest_client'
 require 'singleton'
